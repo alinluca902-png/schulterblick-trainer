@@ -2,498 +2,922 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Schulterblick Trainer</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Space+Mono:wght@400;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schulterblick">
+<meta name="theme-color" content="#0a0e17">
+<title>Schulterblick Trainer Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-dark: #0a0e17;
+    --bg: #0a0e17;
     --bg-card: #111827;
+    --surface: #1a2236;
+    --surface-hover: #243049;
+    --border: #2a3550;
     --accent: #00e676;
-    --accent-dim: #00c853;
-    --accent-glow: rgba(0, 230, 118, 0.3);
-    --danger: #ff1744;
-    --danger-glow: rgba(255, 23, 68, 0.3);
-    --text: #e0e0e0;
-    --text-muted: #6b7280;
-    --surface: #1e293b;
-    --surface-hover: #283548;
+    --accent-soft: rgba(0, 230, 118, 0.15);
+    --accent-glow: rgba(0, 230, 118, 0.25);
+    --danger: #ff3d71;
+    --danger-glow: rgba(255, 61, 113, 0.25);
+    --orange: #ff9100;
+    --blue: #448aff;
+    --purple: #b388ff;
+    --text: #eaf0f6;
+    --text-mid: #94a3b8;
+    --text-dim: #4a5568;
+    --radius: 14px;
+    --radius-sm: 10px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   html, body {
     height: 100%; overflow: hidden;
-    font-family: 'Nunito', sans-serif;
-    background: var(--bg-dark);
-    color: var(--text);
-    user-select: none;
-    -webkit-user-select: none;
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg); color: var(--text);
+    user-select: none; -webkit-user-select: none;
   }
 
-  body {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+  /* ─── APP SHELL ─── */
+  .app {
+    height: 100%; display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+
+  .app::before {
+    content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse at 20% 50%, rgba(0, 230, 118, 0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 50%, rgba(0, 100, 255, 0.03) 0%, transparent 60%),
-      var(--bg-dark);
+      radial-gradient(ellipse at 15% 20%, rgba(0,230,118,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 80%, rgba(68,138,255,0.04) 0%, transparent 50%);
   }
 
-  /* ─── SETTINGS PANEL ─── */
-  .settings {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    padding: 16px 20px;
-    display: flex; flex-wrap: wrap;
+  /* ─── SCREENS ─── */
+  .screen { display: none; flex-direction: column; height: 100%; position: relative; z-index: 1; }
+  .screen.active { display: flex; }
+
+  /* ─── HOME SCREEN ─── */
+  .home-header {
+    padding: 40px 24px 20px; text-align: center;
+  }
+
+  .logo-icon {
+    width: 64px; height: 64px; margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--accent), #00c853);
+    border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; box-shadow: 0 8px 32px var(--accent-glow);
+  }
+
+  .logo-title {
+    font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .logo-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); margin-top: 6px;
+  }
+
+  /* Mode Cards */
+  .modes-section {
+    flex: 1; overflow-y: auto; padding: 8px 20px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px; padding-left: 4px;
+  }
+
+  .mode-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+    margin-bottom: 12px; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 16px;
+    position: relative; overflow: hidden;
+  }
+
+  .mode-card:hover, .mode-card:active {
+    background: var(--surface-hover); border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .mode-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+
+  .mode-icon.green { background: rgba(0,230,118,0.12); }
+  .mode-icon.orange { background: rgba(255,145,0,0.12); }
+  .mode-icon.blue { background: rgba(68,138,255,0.12); }
+  .mode-icon.purple { background: rgba(179,136,255,0.12); }
+
+  .mode-info { flex: 1; }
+
+  .mode-name {
+    font-size: 17px; font-weight: 700; margin-bottom: 3px;
+  }
+
+  .mode-desc {
+    font-size: 13px; color: var(--text-mid); line-height: 1.4;
+  }
+
+  .mode-arrow {
+    color: var(--text-dim); font-size: 18px; flex-shrink: 0;
+  }
+
+  /* ─── SETTINGS SCREEN ─── */
+  .setup-header {
+    padding: 20px 20px 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .back-btn {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .back-btn:active { background: var(--surface-hover); }
+
+  .setup-title { font-size: 20px; font-weight: 700; }
+
+  .setup-body {
+    flex: 1; overflow-y: auto; padding: 8px 20px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .setting-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+
+  .setting-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px;
+  }
+
+  .range-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .range-input {
+    width: 72px; padding: 10px 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 18px;
+    text-align: center; outline: none; transition: border-color 0.2s;
+  }
+
+  .range-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .range-sep { color: var(--text-dim); font-size: 14px; }
+
+  /* Slider */
+  .slider-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .slider {
+    -webkit-appearance: none; appearance: none; flex: 1;
+    height: 6px; background: var(--bg); border-radius: 3px; outline: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px;
+    background: var(--accent); border-radius: 50%; cursor: pointer;
+    box-shadow: 0 2px 10px var(--accent-glow);
+  }
+
+  .slider-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; color: var(--accent);
+    min-width: 40px; text-align: right; font-weight: 700;
+  }
+
+  /* Chip selector */
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+
+  .chip {
+    padding: 10px 16px; border-radius: 50px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text-mid); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+
+  .chip.active {
+    background: var(--accent-soft); border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Color preview chips */
+  .color-chip {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--border); cursor: pointer;
+    transition: all 0.15s; display: inline-flex;
     align-items: center; justify-content: center;
-    gap: 12px 24px;
-    background: linear-gradient(180deg, rgba(10,14,23,0.95) 60%, transparent);
-    z-index: 10;
-    transition: opacity 0.4s, transform 0.4s;
   }
 
-  .settings.hidden {
-    opacity: 0; pointer-events: none; transform: translateY(-20px);
-  }
+  .color-chip.active { border-color: var(--text); transform: scale(1.15); box-shadow: 0 0 12px rgba(255,255,255,0.15); }
 
-  .setting-group {
-    display: flex; align-items: center; gap: 8px;
-  }
+  .color-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 
-  .setting-group label {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--text-muted);
-  }
+  /* Start button */
+  .start-area { padding: 16px 20px 28px; }
 
-  .setting-group input[type="number"] {
-    width: 70px; padding: 8px 10px;
-    background: var(--surface); border: 1px solid #334155;
-    border-radius: 8px; color: var(--text);
-    font-family: 'Space Mono', monospace; font-size: 16px;
-    text-align: center; outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .setting-group input[type="number"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-  }
-
-  .setting-group input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
-
-  /* Interval slider */
-  .slider-wrap {
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .slider-wrap input[type="range"] {
-    -webkit-appearance: none; appearance: none;
-    width: 120px; height: 6px;
-    background: var(--surface); border-radius: 3px;
-    outline: none;
-  }
-
-  .slider-wrap input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 20px; height: 20px;
-    background: var(--accent); border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--accent-glow);
-  }
-
-  .slider-val {
-    font-family: 'Space Mono', monospace;
-    font-size: 14px; color: var(--accent);
-    min-width: 32px; text-align: center;
-  }
-
-  /* Color mode toggle */
-  .color-toggle {
-    display: flex; gap: 4px; background: var(--surface);
-    border-radius: 8px; padding: 3px;
-  }
-
-  .color-opt {
-    padding: 6px 12px; border-radius: 6px;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px; letter-spacing: 1px;
-    cursor: pointer; border: none;
-    background: transparent; color: var(--text-muted);
+  .btn-go {
+    width: 100%; padding: 18px; border: none; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--accent), #00c853);
+    color: var(--bg); font-family: 'Outfit', sans-serif;
+    font-size: 18px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 6px 30px var(--accent-glow);
     transition: all 0.2s;
   }
 
-  .color-opt.active {
-    background: var(--accent); color: var(--bg-dark);
-    font-weight: 700;
+  .btn-go:hover { transform: translateY(-2px); box-shadow: 0 8px 40px var(--accent-glow); }
+  .btn-go:active { transform: translateY(0); }
+
+  /* ─── TRAINING SCREEN ─── */
+  .training-screen {
+    background: var(--bg); align-items: center; justify-content: center;
   }
 
-  /* ─── NUMBER DISPLAY ─── */
-  .number-area {
+  .training-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    z-index: 10;
+  }
+
+  .training-mode-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); background: var(--surface);
+    padding: 6px 12px; border-radius: 6px;
+  }
+
+  .training-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--text-dim);
+  }
+
+  /* Display Area */
+  .display-area {
     display: flex; align-items: center; justify-content: center;
-    flex: 1; width: 100%;
-    position: relative;
+    width: 100%; flex: 1;
   }
 
-  .number {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    font-size: clamp(180px, 45vw, 420px);
-    line-height: 1;
-    color: var(--accent);
-    text-shadow: 0 0 60px var(--accent-glow), 0 0 120px rgba(0,230,118,0.1);
-    opacity: 0;
-    transform: scale(0.7);
+  .display-content {
+    opacity: 0; transform: scale(0.6);
     transition: none;
-    letter-spacing: -4px;
   }
 
-  .number.show {
+  .display-content.show {
     opacity: 1; transform: scale(1);
-    animation: numberPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  .number.color-red { color: #ff1744; text-shadow: 0 0 60px rgba(255,23,68,0.4); }
-  .number.color-blue { color: #2979ff; text-shadow: 0 0 60px rgba(41,121,255,0.4); }
-  .number.color-yellow { color: #ffd600; text-shadow: 0 0 60px rgba(255,214,0,0.4); }
-  .number.color-white { color: #ffffff; text-shadow: 0 0 60px rgba(255,255,255,0.3); }
+  .display-number {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900; font-size: clamp(160px, 42vw, 400px);
+    line-height: 1; letter-spacing: -4px;
+    text-shadow: 0 0 80px currentColor;
+  }
 
-  @keyframes numberPop {
+  .display-symbol {
+    font-size: clamp(120px, 35vw, 320px);
+    line-height: 1;
+    filter: drop-shadow(0 0 40px currentColor);
+  }
+
+  .display-color-block {
+    width: clamp(180px, 50vw, 350px);
+    height: clamp(180px, 50vw, 350px);
+    border-radius: 32px;
+    box-shadow: 0 0 80px currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; font-weight: 800;
+    font-size: clamp(28px, 6vw, 48px); color: rgba(0,0,0,0.6);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+
+  @keyframes pop {
     0% { opacity: 0; transform: scale(0.5); }
     100% { opacity: 1; transform: scale(1); }
   }
 
-  /* Waiting state */
-  .waiting-text {
-    font-family: 'Space Mono', monospace;
-    font-size: 14px; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--text-muted);
-    animation: pulse 2s ease-in-out infinite;
+  /* Progress bar at bottom */
+  .progress-bar-wrap {
+    position: absolute; bottom: 90px; left: 20px; right: 20px;
+    height: 4px; background: var(--surface); border-radius: 2px;
+    overflow: hidden; z-index: 10;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
+  .progress-bar-fill {
+    height: 100%; background: var(--accent); border-radius: 2px;
+    width: 0%; transition: width linear;
   }
 
-  /* ─── CONTROLS ─── */
-  .controls {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 20px;
-    display: flex; align-items: center; justify-content: center;
-    gap: 16px;
-    background: linear-gradient(0deg, rgba(10,14,23,0.95) 60%, transparent);
-    z-index: 10;
+  /* Stop button */
+  .training-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 20px; display: flex; gap: 12px; z-index: 10;
+    justify-content: center;
   }
-
-  .btn {
-    padding: 14px 36px; border: none; border-radius: 12px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 16px; font-weight: 800;
-    letter-spacing: 1px; text-transform: uppercase;
-    cursor: pointer; transition: all 0.2s;
-    position: relative; overflow: hidden;
-  }
-
-  .btn-start {
-    background: var(--accent); color: var(--bg-dark);
-    box-shadow: 0 4px 20px var(--accent-glow);
-  }
-
-  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--accent-glow); }
-  .btn-start:active { transform: translateY(0); }
 
   .btn-stop {
+    padding: 16px 48px; border: none; border-radius: var(--radius);
     background: var(--danger); color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
     box-shadow: 0 4px 20px var(--danger-glow);
+    transition: all 0.2s;
   }
 
-  .btn-stop:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--danger-glow); }
-  .btn-stop:active { transform: translateY(0); }
+  .btn-stop:active { transform: scale(0.97); }
 
-  .btn-fullscreen {
-    padding: 14px 18px;
-    background: var(--surface); color: var(--text-muted);
-    border: 1px solid #334155;
+  .btn-fs {
+    padding: 16px 18px; border: none; border-radius: var(--radius);
+    background: var(--surface); color: var(--text-dim);
+    font-size: 18px; cursor: pointer; transition: all 0.15s;
   }
 
-  .btn-fullscreen:hover { background: var(--surface-hover); color: var(--text); }
+  .btn-fs:active { background: var(--surface-hover); }
 
-  /* ─── COUNTER ─── */
-  .counter {
-    position: absolute;
-    bottom: 80px; right: 20px;
-    font-family: 'Space Mono', monospace;
-    font-size: 12px; letter-spacing: 1px;
-    color: var(--text-muted); z-index: 5;
-  }
+  /* ─── RESULTS SCREEN ─── */
+  .results-screen { align-items: center; justify-content: center; padding: 24px; }
 
-  /* ─── PROGRESS BAR ─── */
-  .progress-ring {
-    position: absolute;
-    bottom: 80px; left: 20px;
-    width: 40px; height: 40px;
-    z-index: 5;
-  }
-
-  .progress-ring circle {
-    fill: none; stroke-width: 3;
-    transform: rotate(-90deg); transform-origin: 50% 50%;
-  }
-
-  .progress-ring .bg { stroke: var(--surface); }
-  .progress-ring .fg {
-    stroke: var(--accent);
-    stroke-dasharray: 107; stroke-dashoffset: 107;
-    transition: stroke-dashoffset linear;
-    stroke-linecap: round;
-  }
-
-  /* ─── BRANDING ─── */
-  .brand {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+  .results-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 400px;
     text-align: center;
-    pointer-events: none;
-    opacity: 0.03;
-    z-index: 1;
   }
 
-  .brand span {
-    font-family: 'Oswald', sans-serif;
-    font-size: 12vw; font-weight: 700;
-    letter-spacing: 8px; text-transform: uppercase;
-    color: white;
+  .results-icon { font-size: 48px; margin-bottom: 12px; }
+
+  .results-title {
+    font-size: 24px; font-weight: 800; margin-bottom: 4px;
   }
 
-  /* ─── RESPONSIVE ─── */
-  @media (max-width: 600px) {
-    .settings { padding: 12px 10px; gap: 8px 16px; }
-    .setting-group label { font-size: 10px; }
-    .setting-group input[type="number"] { width: 58px; font-size: 14px; padding: 6px 8px; }
-    .slider-wrap input[type="range"] { width: 80px; }
-    .btn { padding: 12px 24px; font-size: 14px; }
-    .number { font-size: clamp(140px, 50vw, 320px); }
+  .results-subtitle {
+    font-size: 14px; color: var(--text-mid); margin-bottom: 24px;
   }
 
-  /* Fullscreen mode tweaks */
-  .fullscreen-active .settings { display: none; }
-  .fullscreen-active .number { font-size: clamp(200px, 55vw, 500px); }
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--bg); border-radius: var(--radius-sm); padding: 16px 12px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px; font-weight: 700; color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 11px; color: var(--text-dim); margin-top: 4px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .results-actions { display: flex; flex-direction: column; gap: 10px; }
+
+  .btn-again {
+    width: 100%; padding: 16px; border: none; border-radius: var(--radius);
+    background: var(--accent); color: var(--bg);
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+  }
+
+  .btn-again:active { transform: scale(0.97); }
+
+  .btn-home {
+    width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+    background: var(--bg); color: var(--text-mid); border: 1px solid var(--border);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+
+  .btn-home:active { background: var(--surface); }
+
+  /* ─── FOOTER ─── */
+  .app-footer {
+    padding: 12px 20px 20px; text-align: center;
+  }
+
+  .footer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim);
+  }
+
+  /* ─── ANIMATIONS ─── */
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── PWA safe areas ─── */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .home-header { padding-top: calc(40px + env(safe-area-inset-top)); }
+    .setup-header { padding-top: calc(20px + env(safe-area-inset-top)); }
+    .training-top { padding-top: calc(16px + env(safe-area-inset-top)); }
+    .training-bottom { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .start-area { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+    .app-footer { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  }
 </style>
 </head>
 <body>
 
-<!-- Settings -->
-<div class="settings" id="settings">
-  <div class="setting-group">
-    <label>Von</label>
-    <input type="number" id="rangeMin" value="1" min="0" max="999">
-  </div>
-  <div class="setting-group">
-    <label>Bis</label>
-    <input type="number" id="rangeMax" value="9" min="0" max="999">
-  </div>
-  <div class="setting-group">
-    <label>Intervall</label>
-    <div class="slider-wrap">
-      <input type="range" id="intervalSlider" min="0.5" max="5" step="0.1" value="1.5">
-      <span class="slider-val" id="intervalVal">1.5s</span>
+<div class="app" id="app">
+
+  <!-- ═══════ HOME SCREEN ═══════ -->
+  <div class="screen active" id="screenHome">
+    <div class="home-header fade-in">
+      <div class="logo-icon">👁️</div>
+      <div class="logo-title">Schulterblick Trainer</div>
+      <div class="logo-sub">Kognitive Wahrnehmung trainieren</div>
+    </div>
+
+    <div class="modes-section">
+      <div class="section-label">Trainingsmodus wählen</div>
+
+      <div class="mode-card fade-in" onclick="selectMode('numbers')" style="animation-delay:0.05s">
+        <div class="mode-icon green">🔢</div>
+        <div class="mode-info">
+          <div class="mode-name">Zahlen</div>
+          <div class="mode-desc">Zufällige Zahlen erkennen und rufen. Klassischer Schulterblick.</div>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+
+      <div class="mode-card fade-in" onclick="selectMode('colors')" style="animation-delay:0.1s">
+        <div class="mode-icon orange">🎨</div>
+        <div class="mode-info">
+          <div class="mode-name">Farben</div>
+          <div class="mode-desc">Farben blitzschnell erkennen. Trainiert die periphere Wahrnehmung.</div>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+
+      <div class="mode-card fade-in" onclick="selectMode('symbols')" style="animation-delay:0.15s">
+        <div class="mode-icon blue">⚡</div>
+        <div class="mode-info">
+          <div class="mode-name">Symbole</div>
+          <div class="mode-desc">Formen und Symbole erkennen. Höhere kognitive Anforderung.</div>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+
+      <div class="mode-card fade-in" onclick="selectMode('mixed')" style="animation-delay:0.2s">
+        <div class="mode-icon purple">🧠</div>
+        <div class="mode-info">
+          <div class="mode-name">Mixed</div>
+          <div class="mode-desc">Zahlen, Farben und Symbole gemischt. Maximale Herausforderung.</div>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="app-footer">
+      <div class="footer-text">Schulterblick Trainer Pro • v1.0</div>
     </div>
   </div>
-  <div class="setting-group">
-    <label>Farbe</label>
-    <div class="color-toggle" id="colorToggle">
-      <button class="color-opt active" data-mode="green">Grün</button>
-      <button class="color-opt" data-mode="random">Zufall</button>
-      <button class="color-opt" data-mode="white">Weiß</button>
+
+  <!-- ═══════ SETUP SCREEN ═══════ -->
+  <div class="screen" id="screenSetup">
+    <div class="setup-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div class="setup-title" id="setupTitle">Einstellungen</div>
+    </div>
+
+    <div class="setup-body">
+      <!-- Number Range (only for numbers/mixed) -->
+      <div class="setting-card" id="settingRange">
+        <div class="setting-label">Zahlenbereich</div>
+        <div class="range-row">
+          <input type="number" class="range-input" id="inputMin" value="1" min="0" max="999">
+          <span class="range-sep">bis</span>
+          <input type="number" class="range-input" id="inputMax" value="9" min="0" max="999">
+        </div>
+      </div>
+
+      <!-- Interval -->
+      <div class="setting-card">
+        <div class="setting-label">Intervall</div>
+        <div class="slider-row">
+          <input type="range" class="slider" id="sliderInterval" min="0.5" max="5" step="0.1" value="1.5">
+          <div class="slider-value" id="valInterval">1.5s</div>
+        </div>
+      </div>
+
+      <!-- Difficulty Presets -->
+      <div class="setting-card">
+        <div class="setting-label">Schwierigkeit</div>
+        <div class="chips">
+          <div class="chip" onclick="setDifficulty('easy', this)">Anfänger</div>
+          <div class="chip active" onclick="setDifficulty('medium', this)">Normal</div>
+          <div class="chip" onclick="setDifficulty('hard', this)">Profi</div>
+          <div class="chip" onclick="setDifficulty('nlz', this)">NLZ</div>
+        </div>
+      </div>
+
+      <!-- Number Color (for number mode) -->
+      <div class="setting-card" id="settingColor">
+        <div class="setting-label">Anzeigefarbe</div>
+        <div class="chips">
+          <div class="chip active" data-color="green" onclick="setColor('green', this)">Grün</div>
+          <div class="chip" data-color="white" onclick="setColor('white', this)">Weiß</div>
+          <div class="chip" data-color="random" onclick="setColor('random', this)">Zufall</div>
+        </div>
+      </div>
+
+      <!-- Colors Selection (for color mode) -->
+      <div class="setting-card" id="settingColors" style="display:none;">
+        <div class="setting-label">Aktive Farben</div>
+        <div class="color-chips" id="colorChips"></div>
+      </div>
+
+      <!-- Symbols Selection (for symbol mode) -->
+      <div class="setting-card" id="settingSymbols" style="display:none;">
+        <div class="setting-label">Aktive Symbole</div>
+        <div class="chips" id="symbolChips"></div>
+      </div>
+    </div>
+
+    <div class="start-area">
+      <button class="btn-go" onclick="startTraining()">Training starten</button>
     </div>
   </div>
-</div>
 
-<!-- Background branding -->
-<div class="brand"><span>SCHULTERBLICK</span></div>
+  <!-- ═══════ TRAINING SCREEN ═══════ -->
+  <div class="screen training-screen" id="screenTraining">
+    <div class="training-top">
+      <div class="training-mode-badge" id="trainingBadge">Zahlen</div>
+      <div class="training-count">Anzeigen: <span id="trainingCount">0</span></div>
+    </div>
 
-<!-- Number display -->
-<div class="number-area">
-  <div id="waitingText" class="waiting-text">Bereit zum Start</div>
-  <div id="numberDisplay" class="number" style="display:none;"></div>
-</div>
+    <div class="display-area">
+      <div class="display-content" id="displayContent"></div>
+    </div>
 
-<!-- Progress ring -->
-<svg class="progress-ring" id="progressRing" style="display:none;">
-  <circle class="bg" cx="20" cy="20" r="17"/>
-  <circle class="fg" id="progressFg" cx="20" cy="20" r="17"/>
-</svg>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
 
-<!-- Counter -->
-<div class="counter" id="counter" style="display:none;">Anzeigen: <span id="countVal">0</span></div>
+    <div class="training-bottom">
+      <button class="btn-stop" onclick="stopTraining()">■ Stopp</button>
+      <button class="btn-fs" onclick="toggleFullscreen()">⛶</button>
+    </div>
+  </div>
 
-<!-- Controls -->
-<div class="controls">
-  <button class="btn btn-start" id="btnStart" onclick="startTraining()">▶ Start</button>
-  <button class="btn btn-stop" id="btnStop" onclick="stopTraining()" style="display:none;">■ Stopp</button>
-  <button class="btn btn-fullscreen" onclick="toggleFullscreen()" title="Vollbild">⛶</button>
+  <!-- ═══════ RESULTS SCREEN ═══════ -->
+  <div class="screen results-screen" id="screenResults">
+    <div class="results-card fade-in">
+      <div class="results-icon">🏆</div>
+      <div class="results-title">Training beendet!</div>
+      <div class="results-subtitle" id="resultsMode">Zahlen-Modus</div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="statCount">0</div>
+          <div class="stat-label">Anzeigen</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statDuration">0s</div>
+          <div class="stat-label">Dauer</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statInterval">0s</div>
+          <div class="stat-label">Intervall</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statDifficulty">-</div>
+          <div class="stat-label">Level</div>
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn-again" onclick="startTraining()">Nochmal</button>
+        <button class="btn-home" onclick="goHome()">Zurück zum Menü</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-  let timer = null;
-  let running = false;
-  let count = 0;
-  let lastNumber = null;
+// ═══════ STATE ═══════
+let currentMode = 'numbers';
+let displayColor = 'green';
+let timer = null;
+let running = false;
+let count = 0;
+let startTime = null;
+let lastItem = null;
+let wakeLock = null;
 
-  const numberDisplay = document.getElementById('numberDisplay');
-  const waitingText = document.getElementById('waitingText');
-  const btnStart = document.getElementById('btnStart');
-  const btnStop = document.getElementById('btnStop');
-  const settings = document.getElementById('settings');
-  const countVal = document.getElementById('countVal');
-  const counter = document.getElementById('counter');
-  const progressRing = document.getElementById('progressRing');
-  const progressFg = document.getElementById('progressFg');
-  const intervalSlider = document.getElementById('intervalSlider');
-  const intervalVal = document.getElementById('intervalVal');
+// ═══════ CONFIG ═══════
+const MODES = {
+  numbers: { label: 'Zahlen', badge: 'Zahlen-Modus' },
+  colors: { label: 'Farben', badge: 'Farben-Modus' },
+  symbols: { label: 'Symbole', badge: 'Symbol-Modus' },
+  mixed: { label: 'Mixed', badge: 'Mixed-Modus' },
+};
 
-  const colors = ['', 'color-red', 'color-blue', 'color-yellow', 'color-white'];
-  let colorMode = 'green';
+const DISPLAY_COLORS = {
+  green: '#00e676',
+  white: '#ffffff',
+  red: '#ff1744',
+  blue: '#448aff',
+  yellow: '#ffd600',
+  orange: '#ff9100',
+  purple: '#b388ff',
+  pink: '#ff4081',
+};
 
-  // Interval slider
-  intervalSlider.addEventListener('input', () => {
-    intervalVal.textContent = parseFloat(intervalSlider.value).toFixed(1) + 's';
+const TRAINING_COLORS = [
+  { name: 'Rot', color: '#ff1744' },
+  { name: 'Blau', color: '#448aff' },
+  { name: 'Gelb', color: '#ffd600' },
+  { name: 'Grün', color: '#00e676' },
+  { name: 'Orange', color: '#ff9100' },
+  { name: 'Lila', color: '#b388ff' },
+  { name: 'Pink', color: '#ff4081' },
+  { name: 'Weiß', color: '#ffffff' },
+];
+
+const SYMBOLS = ['▲', '●', '■', '★', '◆', '✚', '⬟', '⬢'];
+const SYMBOL_NAMES = ['Dreieck', 'Kreis', 'Quadrat', 'Stern', 'Raute', 'Kreuz', 'Fünfeck', 'Sechseck'];
+
+let activeColors = [0, 1, 2, 3]; // indices into TRAINING_COLORS
+let activeSymbols = [0, 1, 2, 3, 4]; // indices into SYMBOLS
+
+const DIFFICULTIES = {
+  easy: { interval: 3.0, min: 1, max: 5 },
+  medium: { interval: 1.5, min: 1, max: 9 },
+  hard: { interval: 1.0, min: 1, max: 20 },
+  nlz: { interval: 0.7, min: 1, max: 99 },
+};
+
+const DIFFICULTY_LABELS = { easy: 'Anfänger', medium: 'Normal', hard: 'Profi', nlz: 'NLZ' };
+let currentDifficulty = 'medium';
+
+// ═══════ NAVIGATION ═══════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  if (running) stopTraining();
+  showScreen('screenHome');
+}
+
+function selectMode(mode) {
+  currentMode = mode;
+  document.getElementById('setupTitle').textContent = MODES[mode].label + ' — Einstellungen';
+
+  // Show/hide relevant settings
+  document.getElementById('settingRange').style.display =
+    (mode === 'numbers' || mode === 'mixed') ? 'block' : 'none';
+  document.getElementById('settingColor').style.display =
+    (mode === 'numbers') ? 'block' : 'none';
+  document.getElementById('settingColors').style.display =
+    (mode === 'colors' || mode === 'mixed') ? 'block' : 'none';
+  document.getElementById('settingSymbols').style.display =
+    (mode === 'symbols' || mode === 'mixed') ? 'block' : 'none';
+
+  buildColorChips();
+  buildSymbolChips();
+  showScreen('screenSetup');
+}
+
+// ═══════ SETTINGS ═══════
+const sliderInterval = document.getElementById('sliderInterval');
+const valInterval = document.getElementById('valInterval');
+
+sliderInterval.addEventListener('input', () => {
+  valInterval.textContent = parseFloat(sliderInterval.value).toFixed(1) + 's';
+});
+
+function setDifficulty(level, el) {
+  currentDifficulty = level;
+  document.querySelectorAll('.setting-card:nth-child(3) .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  const d = DIFFICULTIES[level];
+  sliderInterval.value = d.interval;
+  valInterval.textContent = d.interval.toFixed(1) + 's';
+  document.getElementById('inputMin').value = d.min;
+  document.getElementById('inputMax').value = d.max;
+}
+
+function setColor(color, el) {
+  displayColor = color;
+  document.querySelectorAll('#settingColor .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function buildColorChips() {
+  const wrap = document.getElementById('colorChips');
+  wrap.innerHTML = '';
+  TRAINING_COLORS.forEach((c, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'color-chip' + (activeColors.includes(i) ? ' active' : '');
+    chip.style.background = c.color;
+    chip.title = c.name;
+    chip.onclick = () => {
+      if (activeColors.includes(i)) {
+        if (activeColors.length > 2) {
+          activeColors = activeColors.filter(x => x !== i);
+          chip.classList.remove('active');
+        }
+      } else {
+        activeColors.push(i);
+        chip.classList.add('active');
+      }
+    };
+    wrap.appendChild(chip);
   });
+}
 
-  // Color toggle
-  document.getElementById('colorToggle').addEventListener('click', (e) => {
-    if (!e.target.classList.contains('color-opt')) return;
-    document.querySelectorAll('.color-opt').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    colorMode = e.target.dataset.mode;
+function buildSymbolChips() {
+  const wrap = document.getElementById('symbolChips');
+  wrap.innerHTML = '';
+  SYMBOLS.forEach((s, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (activeSymbols.includes(i) ? ' active' : '');
+    chip.textContent = s + ' ' + SYMBOL_NAMES[i];
+    chip.onclick = () => {
+      if (activeSymbols.includes(i)) {
+        if (activeSymbols.length > 2) {
+          activeSymbols = activeSymbols.filter(x => x !== i);
+          chip.classList.remove('active');
+        }
+      } else {
+        activeSymbols.push(i);
+        chip.classList.add('active');
+      }
+    };
+    wrap.appendChild(chip);
   });
+}
 
-  function getRandomNumber() {
-    const min = parseInt(document.getElementById('rangeMin').value) || 0;
-    const max = parseInt(document.getElementById('rangeMax').value) || 9;
-    const lo = Math.min(min, max);
-    const hi = Math.max(min, max);
-    let num;
-    // Avoid repeating the same number twice in a row
-    do {
-      num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
-    } while (num === lastNumber && hi > lo);
-    lastNumber = num;
-    return num;
-  }
-
-  function getColorClass() {
-    if (colorMode === 'green') return '';
-    if (colorMode === 'white') return 'color-white';
-    // random
-    const opts = ['', 'color-red', 'color-blue', 'color-yellow', 'color-white'];
+// ═══════ DISPLAY GENERATORS ═══════
+function getDisplayColor() {
+  if (displayColor === 'random') {
+    const opts = ['#00e676', '#ff1744', '#448aff', '#ffd600', '#ffffff'];
     return opts[Math.floor(Math.random() * opts.length)];
   }
+  return DISPLAY_COLORS[displayColor] || '#00e676';
+}
 
-  function showNumber() {
-    const num = getRandomNumber();
-    const colorClass = getColorClass();
+function generateNumber() {
+  const min = parseInt(document.getElementById('inputMin').value) || 0;
+  const max = parseInt(document.getElementById('inputMax').value) || 9;
+  const lo = Math.min(min, max);
+  const hi = Math.max(min, max);
+  let num;
+  do { num = Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+  while (num === lastItem && hi > lo);
+  lastItem = num;
+  const color = getDisplayColor();
+  return `<div class="display-number" style="color:${color}">${num}</div>`;
+}
 
-    numberDisplay.className = 'number';
-    numberDisplay.textContent = num;
+function generateColor() {
+  let idx;
+  do { idx = activeColors[Math.floor(Math.random() * activeColors.length)]; }
+  while (idx === lastItem && activeColors.length > 1);
+  lastItem = idx;
+  const c = TRAINING_COLORS[idx];
+  return `<div class="display-color-block" style="background:${c.color}; color: rgba(0,0,0,0.5);">${c.name}</div>`;
+}
 
-    // Force reflow for animation restart
-    void numberDisplay.offsetWidth;
+function generateSymbol() {
+  let idx;
+  do { idx = activeSymbols[Math.floor(Math.random() * activeSymbols.length)]; }
+  while (idx === lastItem && activeSymbols.length > 1);
+  lastItem = idx;
+  const color = getDisplayColor();
+  return `<div class="display-symbol" style="color:${color}">${SYMBOLS[idx]}</div>`;
+}
 
-    numberDisplay.className = 'number show ' + colorClass;
-    count++;
-    countVal.textContent = count;
+function generateMixed() {
+  const modes = ['number', 'color', 'symbol'];
+  const pick = modes[Math.floor(Math.random() * modes.length)];
+  if (pick === 'number') return generateNumber();
+  if (pick === 'color') return generateColor();
+  return generateSymbol();
+}
 
-    // Progress ring animation
-    const interval = parseFloat(intervalSlider.value);
-    progressFg.style.transition = 'none';
-    progressFg.style.strokeDashoffset = '107';
-    void progressFg.offsetWidth;
-    progressFg.style.transition = `stroke-dashoffset ${interval}s linear`;
-    progressFg.style.strokeDashoffset = '0';
+function generateDisplay() {
+  switch (currentMode) {
+    case 'numbers': return generateNumber();
+    case 'colors': return generateColor();
+    case 'symbols': return generateSymbol();
+    case 'mixed': return generateMixed();
   }
+}
 
-  function startTraining() {
-    if (running) return;
-    running = true;
-    count = 0;
-    countVal.textContent = '0';
+// ═══════ TRAINING ═══════
+function showNext() {
+  const content = document.getElementById('displayContent');
+  const html = generateDisplay();
 
-    // UI transitions
-    waitingText.style.display = 'none';
-    numberDisplay.style.display = 'block';
-    btnStart.style.display = 'none';
-    btnStop.style.display = 'inline-block';
-    counter.style.display = 'block';
-    progressRing.style.display = 'block';
-    settings.classList.add('hidden');
+  content.classList.remove('show');
+  content.innerHTML = html;
+  void content.offsetWidth;
+  content.classList.add('show');
 
-    // Show first number immediately
-    showNumber();
+  count++;
+  document.getElementById('trainingCount').textContent = count;
 
-    // Start interval
-    const interval = parseFloat(intervalSlider.value) * 1000;
-    timer = setInterval(() => {
-      if (running) showNumber();
-    }, interval);
+  // Progress bar
+  const interval = parseFloat(sliderInterval.value);
+  const bar = document.getElementById('progressBar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = `width ${interval}s linear`;
+  bar.style.width = '100%';
+}
 
-    // Wake lock to keep screen on
-    if ('wakeLock' in navigator) {
-      navigator.wakeLock.request('screen').catch(() => {});
-    }
+function startTraining() {
+  running = true;
+  count = 0;
+  lastItem = null;
+  startTime = Date.now();
+
+  document.getElementById('trainingBadge').textContent = MODES[currentMode].badge;
+  document.getElementById('trainingCount').textContent = '0';
+
+  showScreen('screenTraining');
+  showNext();
+
+  const interval = parseFloat(sliderInterval.value) * 1000;
+  timer = setInterval(() => { if (running) showNext(); }, interval);
+
+  // Wake lock
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
   }
+}
 
-  function stopTraining() {
-    running = false;
-    clearInterval(timer);
-    timer = null;
+function stopTraining() {
+  running = false;
+  clearInterval(timer);
+  timer = null;
 
-    // Show summary briefly
-    numberDisplay.className = 'number show';
-    numberDisplay.textContent = '✓';
-    numberDisplay.style.fontSize = 'clamp(80px, 20vw, 160px)';
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
 
-    setTimeout(() => {
-      numberDisplay.style.display = 'none';
-      numberDisplay.style.fontSize = '';
-      waitingText.style.display = 'block';
-      waitingText.textContent = `${count} Zahlen angezeigt`;
-    }, 1200);
+  const duration = Math.round((Date.now() - startTime) / 1000);
+  const mins = Math.floor(duration / 60);
+  const secs = duration % 60;
+  const durationStr = mins > 0 ? `${mins}:${secs.toString().padStart(2,'0')}` : `${secs}s`;
 
-    btnStart.style.display = 'inline-block';
-    btnStop.style.display = 'none';
-    progressRing.style.display = 'none';
-    settings.classList.remove('hidden');
+  // Results
+  document.getElementById('resultsMode').textContent = MODES[currentMode].badge;
+  document.getElementById('statCount').textContent = count;
+  document.getElementById('statDuration').textContent = durationStr;
+  document.getElementById('statInterval').textContent = parseFloat(sliderInterval.value).toFixed(1) + 's';
+  document.getElementById('statDifficulty').textContent = DIFFICULTY_LABELS[currentDifficulty] || '-';
+
+  showScreen('screenResults');
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
   }
+}
 
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        document.body.classList.add('fullscreen-active');
-      }).catch(() => {});
-    } else {
-      document.exitFullscreen();
-      document.body.classList.remove('fullscreen-active');
-    }
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (running) stopTraining();
+    else if (document.getElementById('screenSetup').classList.contains('active')) startTraining();
   }
-
-  document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement) {
-      document.body.classList.remove('fullscreen-active');
-    }
-  });
-
-  // Keyboard shortcut: Space to start/stop
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
-      e.preventDefault();
-      running ? stopTraining() : startTraining();
-    }
-  });
+  if (e.code === 'Escape' && running) stopTraining();
+});
 </script>
 </body>
 </html>
