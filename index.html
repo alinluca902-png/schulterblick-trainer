@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Schulterblick Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Space+Mono:wght@400;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0e17;
+    --bg-card: #111827;
+    --accent: #00e676;
+    --accent-dim: #00c853;
+    --accent-glow: rgba(0, 230, 118, 0.3);
+    --danger: #ff1744;
+    --danger-glow: rgba(255, 23, 68, 0.3);
+    --text: #e0e0e0;
+    --text-muted: #6b7280;
+    --surface: #1e293b;
+    --surface-hover: #283548;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0, 230, 118, 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(0, 100, 255, 0.03) 0%, transparent 60%),
+      var(--bg-dark);
+  }
+
+  /* ─── SETTINGS PANEL ─── */
+  .settings {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    display: flex; flex-wrap: wrap;
+    align-items: center; justify-content: center;
+    gap: 12px 24px;
+    background: linear-gradient(180deg, rgba(10,14,23,0.95) 60%, transparent);
+    z-index: 10;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .settings.hidden {
+    opacity: 0; pointer-events: none; transform: translateY(-20px);
+  }
+
+  .setting-group {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .setting-group label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+
+  .setting-group input[type="number"] {
+    width: 70px; padding: 8px 10px;
+    background: var(--surface); border: 1px solid #334155;
+    border-radius: 8px; color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 16px;
+    text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .setting-group input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .setting-group input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+
+  /* Interval slider */
+  .slider-wrap {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .slider-wrap input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 120px; height: 6px;
+    background: var(--surface); border-radius: 3px;
+    outline: none;
+  }
+
+  .slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px;
+    background: var(--accent); border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .slider-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px; color: var(--accent);
+    min-width: 32px; text-align: center;
+  }
+
+  /* Color mode toggle */
+  .color-toggle {
+    display: flex; gap: 4px; background: var(--surface);
+    border-radius: 8px; padding: 3px;
+  }
+
+  .color-opt {
+    padding: 6px 12px; border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 1px;
+    cursor: pointer; border: none;
+    background: transparent; color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .color-opt.active {
+    background: var(--accent); color: var(--bg-dark);
+    font-weight: 700;
+  }
+
+  /* ─── NUMBER DISPLAY ─── */
+  .number-area {
+    display: flex; align-items: center; justify-content: center;
+    flex: 1; width: 100%;
+    position: relative;
+  }
+
+  .number {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(180px, 45vw, 420px);
+    line-height: 1;
+    color: var(--accent);
+    text-shadow: 0 0 60px var(--accent-glow), 0 0 120px rgba(0,230,118,0.1);
+    opacity: 0;
+    transform: scale(0.7);
+    transition: none;
+    letter-spacing: -4px;
+  }
+
+  .number.show {
+    opacity: 1; transform: scale(1);
+    animation: numberPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .number.color-red { color: #ff1744; text-shadow: 0 0 60px rgba(255,23,68,0.4); }
+  .number.color-blue { color: #2979ff; text-shadow: 0 0 60px rgba(41,121,255,0.4); }
+  .number.color-yellow { color: #ffd600; text-shadow: 0 0 60px rgba(255,214,0,0.4); }
+  .number.color-white { color: #ffffff; text-shadow: 0 0 60px rgba(255,255,255,0.3); }
+
+  @keyframes numberPop {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Waiting state */
+  .waiting-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--text-muted);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ─── CONTROLS ─── */
+  .controls {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 20px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px;
+    background: linear-gradient(0deg, rgba(10,14,23,0.95) 60%, transparent);
+    z-index: 10;
+  }
+
+  .btn {
+    padding: 14px 36px; border: none; border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 800;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+
+  .btn-start {
+    background: var(--accent); color: var(--bg-dark);
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--accent-glow); }
+  .btn-start:active { transform: translateY(0); }
+
+  .btn-stop {
+    background: var(--danger); color: white;
+    box-shadow: 0 4px 20px var(--danger-glow);
+  }
+
+  .btn-stop:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--danger-glow); }
+  .btn-stop:active { transform: translateY(0); }
+
+  .btn-fullscreen {
+    padding: 14px 18px;
+    background: var(--surface); color: var(--text-muted);
+    border: 1px solid #334155;
+  }
+
+  .btn-fullscreen:hover { background: var(--surface-hover); color: var(--text); }
+
+  /* ─── COUNTER ─── */
+  .counter {
+    position: absolute;
+    bottom: 80px; right: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; letter-spacing: 1px;
+    color: var(--text-muted); z-index: 5;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-ring {
+    position: absolute;
+    bottom: 80px; left: 20px;
+    width: 40px; height: 40px;
+    z-index: 5;
+  }
+
+  .progress-ring circle {
+    fill: none; stroke-width: 3;
+    transform: rotate(-90deg); transform-origin: 50% 50%;
+  }
+
+  .progress-ring .bg { stroke: var(--surface); }
+  .progress-ring .fg {
+    stroke: var(--accent);
+    stroke-dasharray: 107; stroke-dashoffset: 107;
+    transition: stroke-dashoffset linear;
+    stroke-linecap: round;
+  }
+
+  /* ─── BRANDING ─── */
+  .brand {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0.03;
+    z-index: 1;
+  }
+
+  .brand span {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12vw; font-weight: 700;
+    letter-spacing: 8px; text-transform: uppercase;
+    color: white;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 600px) {
+    .settings { padding: 12px 10px; gap: 8px 16px; }
+    .setting-group label { font-size: 10px; }
+    .setting-group input[type="number"] { width: 58px; font-size: 14px; padding: 6px 8px; }
+    .slider-wrap input[type="range"] { width: 80px; }
+    .btn { padding: 12px 24px; font-size: 14px; }
+    .number { font-size: clamp(140px, 50vw, 320px); }
+  }
+
+  /* Fullscreen mode tweaks */
+  .fullscreen-active .settings { display: none; }
+  .fullscreen-active .number { font-size: clamp(200px, 55vw, 500px); }
+</style>
+</head>
+<body>
+
+<!-- Settings -->
+<div class="settings" id="settings">
+  <div class="setting-group">
+    <label>Von</label>
+    <input type="number" id="rangeMin" value="1" min="0" max="999">
+  </div>
+  <div class="setting-group">
+    <label>Bis</label>
+    <input type="number" id="rangeMax" value="9" min="0" max="999">
+  </div>
+  <div class="setting-group">
+    <label>Intervall</label>
+    <div class="slider-wrap">
+      <input type="range" id="intervalSlider" min="0.5" max="5" step="0.1" value="1.5">
+      <span class="slider-val" id="intervalVal">1.5s</span>
+    </div>
+  </div>
+  <div class="setting-group">
+    <label>Farbe</label>
+    <div class="color-toggle" id="colorToggle">
+      <button class="color-opt active" data-mode="green">Grün</button>
+      <button class="color-opt" data-mode="random">Zufall</button>
+      <button class="color-opt" data-mode="white">Weiß</button>
+    </div>
+  </div>
+</div>
+
+<!-- Background branding -->
+<div class="brand"><span>SCHULTERBLICK</span></div>
+
+<!-- Number display -->
+<div class="number-area">
+  <div id="waitingText" class="waiting-text">Bereit zum Start</div>
+  <div id="numberDisplay" class="number" style="display:none;"></div>
+</div>
+
+<!-- Progress ring -->
+<svg class="progress-ring" id="progressRing" style="display:none;">
+  <circle class="bg" cx="20" cy="20" r="17"/>
+  <circle class="fg" id="progressFg" cx="20" cy="20" r="17"/>
+</svg>
+
+<!-- Counter -->
+<div class="counter" id="counter" style="display:none;">Anzeigen: <span id="countVal">0</span></div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-start" id="btnStart" onclick="startTraining()">▶ Start</button>
+  <button class="btn btn-stop" id="btnStop" onclick="stopTraining()" style="display:none;">■ Stopp</button>
+  <button class="btn btn-fullscreen" onclick="toggleFullscreen()" title="Vollbild">⛶</button>
+</div>
+
+<script>
+  let timer = null;
+  let running = false;
+  let count = 0;
+  let lastNumber = null;
+
+  const numberDisplay = document.getElementById('numberDisplay');
+  const waitingText = document.getElementById('waitingText');
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  const settings = document.getElementById('settings');
+  const countVal = document.getElementById('countVal');
+  const counter = document.getElementById('counter');
+  const progressRing = document.getElementById('progressRing');
+  const progressFg = document.getElementById('progressFg');
+  const intervalSlider = document.getElementById('intervalSlider');
+  const intervalVal = document.getElementById('intervalVal');
+
+  const colors = ['', 'color-red', 'color-blue', 'color-yellow', 'color-white'];
+  let colorMode = 'green';
+
+  // Interval slider
+  intervalSlider.addEventListener('input', () => {
+    intervalVal.textContent = parseFloat(intervalSlider.value).toFixed(1) + 's';
+  });
+
+  // Color toggle
+  document.getElementById('colorToggle').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('color-opt')) return;
+    document.querySelectorAll('.color-opt').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    colorMode = e.target.dataset.mode;
+  });
+
+  function getRandomNumber() {
+    const min = parseInt(document.getElementById('rangeMin').value) || 0;
+    const max = parseInt(document.getElementById('rangeMax').value) || 9;
+    const lo = Math.min(min, max);
+    const hi = Math.max(min, max);
+    let num;
+    // Avoid repeating the same number twice in a row
+    do {
+      num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
+    } while (num === lastNumber && hi > lo);
+    lastNumber = num;
+    return num;
+  }
+
+  function getColorClass() {
+    if (colorMode === 'green') return '';
+    if (colorMode === 'white') return 'color-white';
+    // random
+    const opts = ['', 'color-red', 'color-blue', 'color-yellow', 'color-white'];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+
+  function showNumber() {
+    const num = getRandomNumber();
+    const colorClass = getColorClass();
+
+    numberDisplay.className = 'number';
+    numberDisplay.textContent = num;
+
+    // Force reflow for animation restart
+    void numberDisplay.offsetWidth;
+
+    numberDisplay.className = 'number show ' + colorClass;
+    count++;
+    countVal.textContent = count;
+
+    // Progress ring animation
+    const interval = parseFloat(intervalSlider.value);
+    progressFg.style.transition = 'none';
+    progressFg.style.strokeDashoffset = '107';
+    void progressFg.offsetWidth;
+    progressFg.style.transition = `stroke-dashoffset ${interval}s linear`;
+    progressFg.style.strokeDashoffset = '0';
+  }
+
+  function startTraining() {
+    if (running) return;
+    running = true;
+    count = 0;
+    countVal.textContent = '0';
+
+    // UI transitions
+    waitingText.style.display = 'none';
+    numberDisplay.style.display = 'block';
+    btnStart.style.display = 'none';
+    btnStop.style.display = 'inline-block';
+    counter.style.display = 'block';
+    progressRing.style.display = 'block';
+    settings.classList.add('hidden');
+
+    // Show first number immediately
+    showNumber();
+
+    // Start interval
+    const interval = parseFloat(intervalSlider.value) * 1000;
+    timer = setInterval(() => {
+      if (running) showNumber();
+    }, interval);
+
+    // Wake lock to keep screen on
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').catch(() => {});
+    }
+  }
+
+  function stopTraining() {
+    running = false;
+    clearInterval(timer);
+    timer = null;
+
+    // Show summary briefly
+    numberDisplay.className = 'number show';
+    numberDisplay.textContent = '✓';
+    numberDisplay.style.fontSize = 'clamp(80px, 20vw, 160px)';
+
+    setTimeout(() => {
+      numberDisplay.style.display = 'none';
+      numberDisplay.style.fontSize = '';
+      waitingText.style.display = 'block';
+      waitingText.textContent = `${count} Zahlen angezeigt`;
+    }, 1200);
+
+    btnStart.style.display = 'inline-block';
+    btnStop.style.display = 'none';
+    progressRing.style.display = 'none';
+    settings.classList.remove('hidden');
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        document.body.classList.add('fullscreen-active');
+      }).catch(() => {});
+    } else {
+      document.exitFullscreen();
+      document.body.classList.remove('fullscreen-active');
+    }
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      document.body.classList.remove('fullscreen-active');
+    }
+  });
+
+  // Keyboard shortcut: Space to start/stop
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+      e.preventDefault();
+      running ? stopTraining() : startTraining();
+    }
+  });
+</script>
+</body>
+</html>
