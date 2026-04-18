@@ -466,9 +466,9 @@
       <div class="setting-card" id="settingRange">
         <div class="setting-label">Zahlenbereich</div>
         <div class="range-row">
-          <input type="tel" class="range-input" id="inputMin" value="1" pattern="[0-9]*" inputmode="numeric" maxlength="3">
+          <input type="text" class="range-input" id="inputMin" value="1" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <span class="range-sep">bis</span>
-          <input type="tel" class="range-input" id="inputMax" value="9" pattern="[0-9]*" inputmode="numeric" maxlength="3">
+          <input type="text" class="range-input" id="inputMax" value="9" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         </div>
       </div>
 
@@ -859,12 +859,23 @@ document.addEventListener('keydown', (e) => {
 // Limit number inputs to 0-999
 document.querySelectorAll('.range-input').forEach(input => {
   input.setAttribute('maxlength', '3');
+  
+  // iOS Standalone mode: force focus on tap
+  input.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    input.focus();
+    input.select();
+  });
+  
+  // Also handle click for desktop
+  input.addEventListener('click', () => {
+    input.select();
+  });
+  
   input.addEventListener('input', () => {
-    // Remove non-digit characters
     input.value = input.value.replace(/[^0-9]/g, '');
-    // Max 3 digits
     if (input.value.length > 3) input.value = input.value.slice(0, 3);
-    // Cap at 999
     let val = parseInt(input.value);
     if (!isNaN(val) && val > 999) input.value = 999;
   });
@@ -872,12 +883,6 @@ document.querySelectorAll('.range-input').forEach(input => {
     let val = parseInt(input.value);
     if (isNaN(val) || val < 0) input.value = 0;
     if (val > 999) input.value = 999;
-  });
-  // Block typing if already 3 digits
-  input.addEventListener('keypress', (e) => {
-    if (input.value.length >= 3 && e.key !== 'Backspace' && e.key !== 'Delete') {
-      e.preventDefault();
-    }
   });
 });
 </script>
