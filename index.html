@@ -158,6 +158,8 @@
     border-radius: var(--radius-sm); color: var(--text);
     font-family: 'JetBrains Mono', monospace; font-size: 18px;
     text-align: center; outline: none; transition: border-color 0.2s;
+    user-select: text; -webkit-user-select: text;
+    touch-action: manipulation;
   }
 
   .range-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -696,8 +698,6 @@ function setDifficulty(level, el) {
   const d = DIFFICULTIES[level];
   sliderInterval.value = d.interval;
   valInterval.textContent = d.interval.toFixed(1) + 's';
-  document.getElementById('inputMin').value = d.min;
-  document.getElementById('inputMax').value = d.max;
 }
 
 function setColor(color, el) {
@@ -854,6 +854,21 @@ document.addEventListener('keydown', (e) => {
     else if (document.getElementById('screenSetup').classList.contains('active')) startTraining();
   }
   if (e.code === 'Escape' && running) stopTraining();
+});
+
+// Limit number inputs to 0-999
+document.querySelectorAll('.range-input').forEach(input => {
+  input.addEventListener('input', () => {
+    let val = parseInt(input.value);
+    if (isNaN(val)) return;
+    if (val > 999) input.value = 999;
+    if (val < 0) input.value = 0;
+  });
+  input.addEventListener('blur', () => {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < 0) input.value = 0;
+    if (val > 999) input.value = 999;
+  });
 });
 </script>
 </body>
