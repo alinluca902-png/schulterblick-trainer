@@ -150,19 +150,45 @@
     color: var(--text-dim); margin-bottom: 12px;
   }
 
-  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
 
-  .range-input {
-    width: 72px; padding: 10px 8px;
+  .stepper {
+    display: flex; align-items: center; gap: 0;
     background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-family: 'JetBrains Mono', monospace; font-size: 18px;
-    text-align: center; outline: none; transition: border-color 0.2s;
-    user-select: text; -webkit-user-select: text;
-    touch-action: manipulation;
+    border-radius: var(--radius-sm); overflow: hidden;
   }
 
-  .range-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .stepper-btn {
+    width: 44px; height: 44px; border: none;
+    background: var(--surface); color: var(--accent);
+    font-size: 22px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .stepper-btn:active { background: var(--accent); color: var(--bg); }
+
+  .stepper-val {
+    min-width: 52px; height: 44px; display: flex;
+    align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 20px;
+    font-weight: 700; color: var(--text); background: var(--bg);
+  }
+
+  .preset-row {
+    display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap;
+  }
+
+  .preset-btn {
+    flex: 1; min-width: 50px; padding: 8px 4px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text-mid);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+    text-align: center;
+  }
+
+  .preset-btn:active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
   .range-sep { color: var(--text-dim); font-size: 14px; }
 
   .slider-row { display: flex; align-items: center; gap: 12px; }
@@ -466,9 +492,24 @@
       <div class="setting-card" id="settingRange">
         <div class="setting-label">Zahlenbereich</div>
         <div class="range-row">
-          <input type="text" class="range-input" id="inputMin" value="1" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <div class="stepper">
+            <button class="stepper-btn" onclick="stepValue('inputMin', -1)">−</button>
+            <span class="stepper-val" id="inputMin">1</span>
+            <button class="stepper-btn" onclick="stepValue('inputMin', 1)">+</button>
+          </div>
           <span class="range-sep">bis</span>
-          <input type="text" class="range-input" id="inputMax" value="9" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <div class="stepper">
+            <button class="stepper-btn" onclick="stepValue('inputMax', -1)">−</button>
+            <span class="stepper-val" id="inputMax">9</span>
+            <button class="stepper-btn" onclick="stepValue('inputMax', 1)">+</button>
+          </div>
+        </div>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="setRange(1,9)">1-9</button>
+          <button class="preset-btn" onclick="setRange(1,20)">1-20</button>
+          <button class="preset-btn" onclick="setRange(1,50)">1-50</button>
+          <button class="preset-btn" onclick="setRange(1,99)">1-99</button>
+          <button class="preset-btn" onclick="setRange(1,999)">1-999</button>
         </div>
       </div>
 
@@ -749,8 +790,8 @@ function getDisplayColor() {
 }
 
 function generateNumber() {
-  const min = parseInt(document.getElementById('inputMin').value) || 0;
-  const max = parseInt(document.getElementById('inputMax').value) || 9;
+  const min = parseInt(document.getElementById('inputMin').textContent) || 0;
+  const max = parseInt(document.getElementById('inputMax').textContent) || 9;
   const lo = Math.min(min, max), hi = Math.max(min, max);
   let num;
   do { num = Math.floor(Math.random() * (hi - lo + 1)) + lo; } while (num === lastItem && hi > lo);
@@ -856,34 +897,57 @@ document.addEventListener('keydown', (e) => {
   if (e.code === 'Escape' && running) stopTraining();
 });
 
-// Limit number inputs to 0-999
-document.querySelectorAll('.range-input').forEach(input => {
-  input.setAttribute('maxlength', '3');
+// Stepper: +/- buttons for number range
+function stepValue(id, delta) {
+  const el = document.getElementById(id);
+  let val = parseInt(el.textContent) || 0;
+  // Hold for fast stepping: bigger delta based on current value
+  val += delta;
+  if (val < 0) val = 0;
+  if (val > 999) val = 999;
+  el.textContent = val;
+}
+
+// Preset range buttons
+function setRange(min, max) {
+  document.getElementById('inputMin').textContent = min;
+  document.getElementById('inputMax').textContent = max;
+}
+
+// Long press for fast stepping
+document.querySelectorAll('.stepper-btn').forEach(btn => {
+  let interval = null;
+  let timeout = null;
   
-  // iOS Standalone mode: force focus on tap
-  input.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    input.focus();
-    input.select();
-  });
+  const startStep = () => {
+    const id = btn.parentElement.querySelector('.stepper-val').id;
+    const delta = btn.textContent.trim() === '+' ? 1 : -1;
+    
+    timeout = setTimeout(() => {
+      let step = 1;
+      let count = 0;
+      interval = setInterval(() => {
+        count++;
+        if (count > 20) step = 10;
+        else if (count > 10) step = 5;
+        stepValue(id, delta * step);
+      }, 80);
+    }, 400);
+  };
   
-  // Also handle click for desktop
-  input.addEventListener('click', () => {
-    input.select();
-  });
+  const stopStep = () => {
+    clearTimeout(timeout);
+    clearInterval(interval);
+    timeout = null;
+    interval = null;
+  };
   
-  input.addEventListener('input', () => {
-    input.value = input.value.replace(/[^0-9]/g, '');
-    if (input.value.length > 3) input.value = input.value.slice(0, 3);
-    let val = parseInt(input.value);
-    if (!isNaN(val) && val > 999) input.value = 999;
-  });
-  input.addEventListener('blur', () => {
-    let val = parseInt(input.value);
-    if (isNaN(val) || val < 0) input.value = 0;
-    if (val > 999) input.value = 999;
-  });
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); startStep(); });
+  btn.addEventListener('touchend', stopStep);
+  btn.addEventListener('touchcancel', stopStep);
+  btn.addEventListener('mousedown', startStep);
+  btn.addEventListener('mouseup', stopStep);
+  btn.addEventListener('mouseleave', stopStep);
 });
 </script>
 </body>
